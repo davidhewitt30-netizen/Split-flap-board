@@ -3,7 +3,7 @@ const ical = require("node-ical");
 export default async function handler(request, response) {
   try {
     // PASTE YOUR WEBCAL LINK HERE. Keep the quotes!
-    const calendarUrl = "YOUR_WEBCAL_LINK_HERE".replace("webcal://", "https://");
+    const calendarUrl = "webcal://p161-caldav.icloud.com/published/2/ODUwNDM3NjI4NTA0Mzc2MlSLob-1XVFuM3MQvP12xNm6YB2s3sorAzrBNeoL3GdeUkdeCHrC1bPxBU2h9IQGXuwTDNCdw7psWkIvvaf_3G4".replace("webcal://", "https://");
     
     const events = await ical.async.fromURL(calendarUrl);
     const today = new Date();
