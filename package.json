@@ -1,0 +1,7 @@
+{
+  "name": "split-flap-board",
+  "version": "1.0.0",
+  "dependencies": {
+    "node-ical": "^0.18.0"
+  }
+}
