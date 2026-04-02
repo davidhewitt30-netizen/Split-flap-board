@@ -6,50 +6,52 @@
   <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@600&display=swap" rel="stylesheet">
   <style>
     :root {
-      /* New Dark Palette */
       --bg-color: #2a2a2a;      /* Dark Grey */
       --flap-bg: #000000;       /* Black */
-      --text-color: #ffffff;    /* White */
-      --line-color: #1a1a1a;    /* Subtle dark split line */
+      --line-color: #1a1a1a;    /* Split line */
     }
     body { 
       background: var(--bg-color);
-      color: var(--text-color); 
       font-family: 'Cabin', sans-serif; 
-      margin: 0; 
-      padding: 3vw; 
-      overflow-x: hidden;
+      margin: 0; padding: 3vw; overflow-x: hidden;
     }
     .header-row { 
-      display: flex; gap: 1vw; margin-bottom: 2vh; 
-      color: #999999; font-size: 2vw; 
-      text-transform: uppercase; border-bottom: 2px solid #555555;
+      display: flex; margin-bottom: 2vh; 
+      color: #888888; font-size: 2vw; 
+      text-transform: uppercase; border-bottom: 2px solid #444444;
       padding-bottom: 1vh;
     }
-    .row { display: flex; gap: 1.5vw; margin-bottom: 1.5vh; align-items: center; }
+    
+    .event-group {
+      margin-bottom: 2.5vh;
+      border-bottom: 1px dashed #444;
+      padding-bottom: 2vh;
+    }
+    .row { display: flex; gap: 1.5vw; margin-bottom: 1vh; align-items: center; }
     .col { display: flex; gap: 0.3vw; }
     
-    /* Adjusted widths for more flaps */
-    .time-col { width: 12vw; }
-    .event-col { width: 48vw; }
-    .loc-col { width: 30vw; }
+    /* New Layout Widths */
+    .time-col { width: 14vw; }
+    .spacer-col { width: 14vw; } /* Empty space under the time */
+    .text-col { width: 75vw; }   /* Massive column for Event & Location */
 
     .flap {
       background: var(--flap-bg); 
-      width: 2.2vw; /* Narrower to fit more */
-      height: 3.8vw; 
-      line-height: 3.8vw;
-      text-align: center; 
-      font-size: 2.5vw; 
-      font-weight: 600;
-      border-radius: 4px; 
-      position: relative;
+      width: 2.3vw; height: 3.8vw; line-height: 3.8vw;
+      text-align: center; font-size: 2.5vw; font-weight: 600;
+      border-radius: 4px; position: relative;
       box-shadow: 0 4px 6px rgba(0,0,0,0.5);
     }
     .flap::after { 
       content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; 
       background: var(--line-color); z-index: 5;
     }
+
+    /* Multi-Calendar Colors */
+    .color-white .flap { color: #ffffff; text-shadow: 0 0 4px rgba(255,255,255,0.2); }
+    .color-blue .flap { color: #4da8da; text-shadow: 0 0 5px rgba(77,168,218,0.4); }
+    .color-purple .flap { color: #b19cd9; text-shadow: 0 0 5px rgba(177,156,217,0.4); }
+
     .flipping { animation: flip 0.08s linear; }
     @keyframes flip { 0% { transform: scaleY(1); } 50% { transform: scaleY(0.5); } 100% { transform: scaleY(1); } }
   </style>
@@ -57,20 +59,15 @@
 <body>
   <div class="header-row">
     <div class="time-col">Time</div>
-    <div class="event-col">Event</div>
-    <div class="loc-col">Location</div>
+    <div class="text-col">Event & Location</div>
   </div>
   <div id="board"></div>
 
 <script>
-  // Added a few extra punctuation marks just in case
   const characters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/-.,!?()'";
 
   function createFlaps(text, length, container, colorClass = "") {
-    // 1. EMOJI STRIPPER: Removes anything not in the 'characters' list above
     const cleanText = text.toString().toUpperCase().split('').filter(char => characters.includes(char)).join('');
-    
-    // 2. Pad or chop to the exact length needed
     const padded = cleanText.substring(0, length).padEnd(length, ' ');
     
     const colDiv = document.createElement('div');
@@ -95,10 +92,10 @@
           f.currentIdx = (f.currentIdx + 1) % characters.length;
           f.el.innerText = characters[f.currentIdx];
           f.el.classList.add('flipping');
-          setTimeout(() => f.el.classList.remove('flipping'), 40);
+          setTimeout(() => f.el.classList.remove('flipping'), 35); // Slightly faster animation for larger board
         }
       });
-      if (!done) setTimeout(step, 50);
+      if (!done) setTimeout(step, 45);
     }
     step();
   }
@@ -115,13 +112,32 @@
       }
 
       data.forEach(row => {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'row';
-        // Increased the flap counts: Time (5), Event (20), Location (12)
-        createFlaps(row.time, 5, rowDiv, 'time-col');
-        createFlaps(row.title, 20, rowDiv, 'event-col');
-        createFlaps(row.location, 12, rowDiv, 'loc-col');
-        board.appendChild(rowDiv);
+        // Container for the whole event (applies the color class to all flaps inside)
+        const groupDiv = document.createElement('div');
+        groupDiv.className = `event-group color-${row.color}`;
+        
+        // --- TOP ROW: TIME & EVENT ---
+        const topRow = document.createElement('div');
+        topRow.className = 'row';
+        createFlaps(row.time, 5, topRow, 'time-col');
+        createFlaps(row.title, 25, topRow, 'text-col'); // 25 flaps for the title!
+        groupDiv.appendChild(topRow);
+
+        // --- BOTTOM ROW: LOCATION (Only renders if a location exists) ---
+        if (row.location && row.location.trim().length > 0) {
+          const botRow = document.createElement('div');
+          botRow.className = 'row';
+          
+          // Add empty space under the Time column to align the location perfectly
+          const spacer = document.createElement('div');
+          spacer.className = 'spacer-col';
+          botRow.appendChild(spacer);
+          
+          createFlaps("LOC: " + row.location, 25, botRow, 'text-col'); // 25 flaps for location!
+          groupDiv.appendChild(botRow);
+        }
+
+        board.appendChild(groupDiv);
       });
     });
     
