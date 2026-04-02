@@ -3,33 +3,48 @@
 <head>
   <meta charset="utf-8">
   <title>Daily Itinerary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #103c2e; --flap-bg: #000000; --text-color: #fcbc00; 
-      --line-color: rgba(16, 60, 46, 0.6);
+      /* New Dark Palette */
+      --bg-color: #2a2a2a;      /* Dark Grey */
+      --flap-bg: #000000;       /* Black */
+      --text-color: #ffffff;    /* White */
+      --line-color: #1a1a1a;    /* Subtle dark split line */
     }
     body { 
-      background: radial-gradient(circle at center, #164d3c 0%, #103c2e 100%);
-      color: var(--text-color); font-family: 'Courier New', monospace; 
-      margin: 0; padding: 4vw; overflow-x: hidden;
+      background: var(--bg-color);
+      color: var(--text-color); 
+      font-family: 'Cabin', sans-serif; 
+      margin: 0; 
+      padding: 3vw; 
+      overflow-x: hidden;
     }
     .header-row { 
-      display: flex; gap: 2vw; margin-bottom: 2vh; 
-      color: rgba(252, 188, 0, 0.5); font-size: 2vw; 
-      text-transform: uppercase; border-bottom: 2px solid rgba(252, 188, 0, 0.2);
+      display: flex; gap: 1vw; margin-bottom: 2vh; 
+      color: #999999; font-size: 2vw; 
+      text-transform: uppercase; border-bottom: 2px solid #555555;
+      padding-bottom: 1vh;
     }
-    .row { display: flex; gap: 2vw; margin-bottom: 2vh; align-items: center; }
-    .col { display: flex; gap: 0.5vw; }
+    .row { display: flex; gap: 1.5vw; margin-bottom: 1.5vh; align-items: center; }
+    .col { display: flex; gap: 0.3vw; }
     
-    .time-col { width: 15vw; }
-    .event-col { width: 45vw; }
+    /* Adjusted widths for more flaps */
+    .time-col { width: 12vw; }
+    .event-col { width: 48vw; }
     .loc-col { width: 30vw; }
 
     .flap {
-      background: var(--flap-bg); width: 3vw; height: 5vw; line-height: 5vw;
-      text-align: center; font-size: 3.5vw; font-weight: bold;
-      border-radius: 4px; border: 1px solid #000; position: relative;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      background: var(--flap-bg); 
+      width: 2.2vw; /* Narrower to fit more */
+      height: 3.8vw; 
+      line-height: 3.8vw;
+      text-align: center; 
+      font-size: 2.5vw; 
+      font-weight: 600;
+      border-radius: 4px; 
+      position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.5);
     }
     .flap::after { 
       content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; 
@@ -48,10 +63,16 @@
   <div id="board"></div>
 
 <script>
-  const characters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/-";
+  // Added a few extra punctuation marks just in case
+  const characters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/-.,!?()'";
 
   function createFlaps(text, length, container, colorClass = "") {
-    const padded = text.toString().substring(0, length).padEnd(length, ' ');
+    // 1. EMOJI STRIPPER: Removes anything not in the 'characters' list above
+    const cleanText = text.toString().toUpperCase().split('').filter(char => characters.includes(char)).join('');
+    
+    // 2. Pad or chop to the exact length needed
+    const padded = cleanText.substring(0, length).padEnd(length, ' ');
+    
     const colDiv = document.createElement('div');
     colDiv.className = `col ${colorClass}`;
     
@@ -82,7 +103,6 @@
     step();
   }
 
-  // Fetch from the Vercel Serverless Function
   fetch('/api/events')
     .then(response => response.json())
     .then(data => {
@@ -90,16 +110,17 @@
       board.innerHTML = ''; 
       
       if(data.length === 0) {
-        board.innerHTML = "<div style='color: white; font-size: 3vw; margin-top: 5vh;'>NO EVENTS TODAY</div>";
+        board.innerHTML = "<div style='color: #999; font-size: 3vw; margin-top: 5vh;'>NO EVENTS TODAY</div>";
         return;
       }
 
       data.forEach(row => {
         const rowDiv = document.createElement('div');
         rowDiv.className = 'row';
+        // Increased the flap counts: Time (5), Event (20), Location (12)
         createFlaps(row.time, 5, rowDiv, 'time-col');
-        createFlaps(row.title, 15, rowDiv, 'event-col');
-        createFlaps(row.location, 10, rowDiv, 'loc-col');
+        createFlaps(row.title, 20, rowDiv, 'event-col');
+        createFlaps(row.location, 12, rowDiv, 'loc-col');
         board.appendChild(rowDiv);
       });
     });
