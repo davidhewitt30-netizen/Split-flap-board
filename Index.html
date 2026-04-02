@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Daily Itinerary</title>
+  <style>
+    :root {
+      --bg-color: #103c2e; --flap-bg: #000000; --text-color: #fcbc00; 
+      --line-color: rgba(16, 60, 46, 0.6);
+    }
+    body { 
+      background: radial-gradient(circle at center, #164d3c 0%, #103c2e 100%);
+      color: var(--text-color); font-family: 'Courier New', monospace; 
+      margin: 0; padding: 4vw; overflow-x: hidden;
+    }
+    .header-row { 
+      display: flex; gap: 2vw; margin-bottom: 2vh; 
+      color: rgba(252, 188, 0, 0.5); font-size: 2vw; 
+      text-transform: uppercase; border-bottom: 2px solid rgba(252, 188, 0, 0.2);
+    }
+    .row { display: flex; gap: 2vw; margin-bottom: 2vh; align-items: center; }
+    .col { display: flex; gap: 0.5vw; }
+    
+    .time-col { width: 15vw; }
+    .event-col { width: 45vw; }
+    .loc-col { width: 30vw; }
+
+    .flap {
+      background: var(--flap-bg); width: 3vw; height: 5vw; line-height: 5vw;
+      text-align: center; font-size: 3.5vw; font-weight: bold;
+      border-radius: 4px; border: 1px solid #000; position: relative;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .flap::after { 
+      content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; 
+      background: var(--line-color); z-index: 5;
+    }
+    .flipping { animation: flip 0.08s linear; }
+    @keyframes flip { 0% { transform: scaleY(1); } 50% { transform: scaleY(0.5); } 100% { transform: scaleY(1); } }
+  </style>
+</head>
+<body>
+  <div class="header-row">
+    <div class="time-col">Time</div>
+    <div class="event-col">Event</div>
+    <div class="loc-col">Location</div>
+  </div>
+  <div id="board"></div>
+
+<script>
+  const characters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:/-";
+
+  function createFlaps(text, length, container, colorClass = "") {
+    const padded = text.toString().substring(0, length).padEnd(length, ' ');
+    const colDiv = document.createElement('div');
+    colDiv.className = `col ${colorClass}`;
+    
+    const flaps = padded.split('').map(char => {
+      const el = document.createElement('div');
+      el.className = 'flap'; el.innerText = ' ';
+      colDiv.appendChild(el);
+      return { el, target: char, currentIdx: 0 };
+    });
+    container.appendChild(colDiv);
+    animate(flaps);
+  }
+
+  function animate(flaps) {
+    function step() {
+      let done = true;
+      flaps.forEach(f => {
+        if (characters[f.currentIdx] !== f.target) {
+          done = false;
+          f.currentIdx = (f.currentIdx + 1) % characters.length;
+          f.el.innerText = characters[f.currentIdx];
+          f.el.classList.add('flipping');
+          setTimeout(() => f.el.classList.remove('flipping'), 40);
+        }
+      });
+      if (!done) setTimeout(step, 50);
+    }
+    step();
+  }
+
+  // Fetch from the Vercel Serverless Function
+  fetch('/api/events')
+    .then(response => response.json())
+    .then(data => {
+      const board = document.getElementById('board');
+      board.innerHTML = ''; 
+      
+      if(data.length === 0) {
+        board.innerHTML = "<div style='color: white; font-size: 3vw; margin-top: 5vh;'>NO EVENTS TODAY</div>";
+        return;
+      }
+
+      data.forEach(row => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
+        createFlaps(row.time, 5, rowDiv, 'time-col');
+        createFlaps(row.title, 15, rowDiv, 'event-col');
+        createFlaps(row.location, 10, rowDiv, 'loc-col');
+        board.appendChild(rowDiv);
+      });
+    });
+    
+    setInterval(() => location.reload(), 15 * 60 * 1000);
+</script>
+</body>
+</html>
